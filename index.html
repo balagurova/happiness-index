@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happiness Index Explained</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="./style.css" rel="stylesheet" type="text/css"/> 
+    <link rel="stylesheet" href="https://use.typekit.net/equ1sqe.css">
+    
+</head>
+<body>
+
+    <div class="container">
+    <div class="main">
+        <div class="header">
+            <h1>Happiness Index<div class="info" id="info-0">i</div> 2020 in</h1>
+            <select id="selectButton"></select>
+        </div>   
+        <div class ="notes">Explained by different factors (click to deselect)</div>
+        <div class="happinessFilter">
+                <div class="filterH" id="checkboxGDPDiv"><input type="checkbox" id="checkboxGDP" value="GDP"
+                        checked><label for="checkboxGDP">Log GDP per capita<div class="info" id="info-1">i</div></label></div>
+                <div class="filterH" id="checkboxSupportDiv"><input type="checkbox" id="checkboxSupport"
+                        value="socialSupport" checked><label for="checkboxSupport">Social support<div class="info" id="info-2">i
+                        </div></label></div>
+                <div class="filterH" id="checkboxExpectancyDiv"><input type="checkbox" id="checkboxExpectancy"
+                        value="lifeExpectancy" checked><label for="checkboxExpectancy">Healthy life expectancy at birth
+                        <div class="info" id="info-3">i</div></label></div>
+                <div class="filterH" id="checkboxFreedomDiv"><input type="checkbox" id="checkboxFreedom"
+                        value="freedomToMakeChoices" checked><label for="checkboxFreedom">Freedom to make life choices
+                        <div class="info" id="info-4">i</div></label></div>
+                <div class="filterH" id="checkboxGenerosityDiv"><input type="checkbox" id="checkboxGenerosity"
+                        value="generosity" checked><label for="checkboxGenerosity">Generosity<div class="info" id="info-5">i</div>
+                    </label></div>
+                <div class="filterH" id="checkboxCorruptionDiv"><input type="checkbox" id="checkboxCorruption"
+                        value="perceptionsOfCorruption" checked><label for="checkboxCorruption">Perceptions of
+                        corruption<div class="info" id="info-6">i</div></label></div>
+        </div>
+        <div class="chart"></div>
+        <div class="ending">
+            <p class="text">Sources: <a href="https://worldhappiness.report/">The World Happiness Report 2021, United Nations</a></p>
+            <p class="text">Anastasiia Balagurova, 2022</p>
+        </div>
+    </div>
+    <div class="list">
+        <h2>TOP happiest countries</h2>
+        <div class="notes">Scroll this area to see </br>all countries</div>
+        <div class = "listInside"></div>
+    </div>
+    </div>
+    <script>
+        var side = 270;
+
+        var canvas = d3.select(".chart")
+            .append("div")
+            .classed("flowerArea", true)
+
+        d3.csv("./data/happiness-index.csv").then(function (data) {
+            //filter data from 2020 year
+            var filtered = data.filter(function (d) {
+                    return d.year === "2020"
+                })
+                .sort(function (a, b) {
+                    return d3.descending(a["Life Ladder"], b["Life Ladder"])
+                })
+
+            //create extents and scales
+            var maxLadder = d3.max(filtered, function (d) {
+                return parseFloat(d["Life Ladder"])
+            });
+
+            var scaleLadder = d3.scaleLinear()
+                .domain([0,maxLadder])
+                .range([0, 100]);
+
+            var maxGDP = d3.max(filtered, function (d) {
+                return parseFloat(d["Log GDP per capita"])
+            });
+
+            var scaleGDP = d3.scaleLinear()
+                .domain([0,maxGDP])
+                .range([0, 100]);
+
+            var maxSupport = d3.max(filtered, function (d) {
+                return parseFloat(d["Social support"])
+            });
+
+            var scaleSupport = d3.scaleLinear()
+                .domain([0,maxSupport])
+                .range([0, 100]);
+
+            var maxExpectancy = d3.max(filtered, function (d) {
+                return parseFloat(d["Healthy life expectancy at birth"])
+            });
+
+            var scaleExpectancy = d3.scaleLinear()
+                .domain([0,maxExpectancy])
+                .range([0, 100]);
+
+            var extentGenerosity = d3.extent(filtered, function (d) {
+                return parseFloat(d["Generosity"])
+            });
+
+            var scaleGenerosity = d3.scaleLinear()
+                .domain(extentGenerosity)
+                .range([0, 100]);
+
+
+            var maxFreedom = d3.max(filtered, function (d) {
+                return parseFloat(d["Freedom to make life choices"])
+            });
+
+            var scaleFreedom = d3.scaleLinear()
+                .domain([0,maxFreedom])
+                .range([0, 100]);
+
+
+           
+            var maxCorruption = d3.max(filtered, function (d) {
+                return parseFloat(d["Perceptions of corruption"])
+            });
+            
+       
+
+            var scaleCorruption = d3.scaleLinear()
+                .domain([0,maxCorruption])
+                .range([100, 0]);
+
+            var country = function (d) {
+                return d["Country name"];
+            }
+
+            //creat a list of countries names
+            var labels = d3.select(".listInside")
+                .append("div")
+                .selectAll("text")
+                .data(filtered)
+                .join("text")
+                .attr("y", function (d, i) {
+                    return (i) * 16
+                })
+                .text(function (d) {
+                    return d["Country name"];
+                })
+                .classed("listCountries", true)
+                .attr("fill", "black")
+
+            var rounded = d3.format(".3n");
+            
+                //creat a list of countries numbers
+            var numbers = d3.select(".listInside")
+                .append("div")
+                .selectAll("text")
+                .data(filtered)
+                .join("text")
+                .attr("x", 200)
+                .attr("y", function (d, i) {
+                    return (i) * 16
+                })
+                .text(function (d) {
+                    return rounded(d["Life Ladder"]);
+                })
+                .classed("listNumbers", true)
+                .attr("fill", "black")
+
+            //draw the main visualization
+            function draw(filteredData) {
+                var circles = canvas
+                    .selectAll("svg")
+                    .data(filteredData, function (d) {
+                        return d["Country name"]
+                    })
+                    .join(function (enter) {
+                        var circles = enter.append("svg")
+                            .attr("width", side)
+                            .attr("height", side)
+                            .classed("flowers", true)
+
+                        circles.append("text")
+                            .attr("x", 0)
+                            .attr("y", 10)
+                            .text(function (d) {
+                                return d["Country name"];
+                            })
+                            .attr("fill", "#000")
+                            .classed("text", true)
+                            .attr("opacity", 1)
+                            .attr("id","countryName")
+
+                        circles.append("text")
+                            .attr("x", 0)
+                            .attr("y", 24)
+                            .text(function (d) {
+                                return rounded(d["Life Ladder"]);
+                            })
+                            .attr("fill", "#000")
+                            .classed("bold", true)
+                            .attr("opacity", 1)
+
+                             //create a grey dashed line for each flower
+                        var benchmark = circles.append("circle")
+                            .attr("r", function (d) {
+                                return scaleLadder(7.889)
+                            })
+                            .attr("cx", side / 2)
+                            .attr("cy", side / 2)
+                            .style("stroke-dasharray", ("3, 3"))
+                            .attr("fill", "transparent")
+                            .attr("stroke", "black")
+                            .attr("opacity", 0.3)
+                            .attr("stroke-weight", 0.5)
+
+                        var lifeLadder = circles.append("circle")
+                            .attr("r", function (d) {
+                                return scaleLadder(d["Life Ladder"])
+                            })
+                            .attr("cx", side / 2)
+                            .attr("cy", side / 2)
+                            .attr("fill", "transparent")
+                            .attr("stroke", "black")
+                            .attr("stroke-weight", 0.5)
+                        
+                       
+
+                        //create a text on a curve for the 2nd option
+                        d3.select(circles.nodes()[1])
+                            .append("defs").append("path")
+                            .attr("id", "curve")
+                            .attr("d", "M135,30.7c57.6,0,104.3,46.7,104.3,104.3c0,8.2-0.9,16.2-2.7,23.8")
+                            .attr("fill","transparent")
+
+                        d3.select(circles.nodes()[1])
+                            .append("text")
+                            .attr("id", "curve-text")
+                            .append("textPath")
+                            .attr("xlink:href", "#curve")
+                            .text("The happiest country benchmark")
+                            .style("font-size","9px")
+                            .style("color","black")
+                            .style("opacity","30%")
+                            .style("line-height","40px")
+
+                        circles.append("use")
+                            .attr("id", "curve-line")
+                            .attr("xlink:href", "#curve");
+
+                        //create a text on a curve for the 1st option
+                        d3.select(circles.nodes()[0])
+                            .append("defs").append("path")
+                            .attr("id", "curve1")
+                            .attr("d", "M135,30.7c57.6,0,104.3,46.7,104.3,104.3c0,8.2-0.9,16.2-2.7,23.8")
+                            .attr("fill","transparent")
+
+                        d3.select(circles.nodes()[0])
+                            .append("text")
+                            .attr("id", "curve-text1")
+                            .append("textPath")
+                            .attr("xlink:href", "#curve1")
+                            .text("Happiness Index")
+                            .style("font-size","9px")
+                            .style("color","black")
+                            
+
+                        circles.append("use")
+                            .attr("id", "curve-line1")
+                            .attr("xlink:href", "#curve1");
+
+                        //create petals 
+                        var logGDPPerCapita = circles
+                        .filter(function (d){ return d["Log GDP per capita"] != "" })
+                        .append("ellipse")
+                            .attr("ry", function (d) {
+                                return scaleGDP(d["Log GDP per capita"]) /2
+                            })
+                            .attr("cy", function(d){return (side / 2) - (scaleGDP(d["Log GDP per capita"]) /2)})
+                            .style("transform", "rotate(0deg)")
+                            .attr("fill", "#E7E2FE")
+                            .attr("id", "GDP")
+
+                        var socialSupport = circles
+                        .filter(function (d){ return d["Social support"] != "" })
+                        .append("ellipse")
+                            .attr("ry", function (d) {
+                                return scaleSupport(d["Social support"]) /2
+                            })
+                            .attr("cy", function(d){return (side/2) - (scaleSupport(d["Social support"]) /2)})
+                            .style("transform", "rotate(60deg)")
+                            .attr("fill", "#DFF6E2")
+                            .attr("id", "support")
+
+
+                        var healthyLifeExpectancy = circles
+                        .filter(function (d){ return d["Healthy life expectancy at birth"] != "" })
+                        .append("ellipse")
+                            .attr("ry", function (d) {
+                                return scaleExpectancy(d["Healthy life expectancy at birth"]) /2
+                            })
+                            .attr("cy", function(d){return (side / 2) - (scaleExpectancy(d["Healthy life expectancy at birth"])/2)})
+                            .style("transform", "rotate(120deg)")
+                            .attr("fill", "#FEE2F9")
+                            .attr("id", "expectancy")
+
+                        var freedomToMakeLifeChoices = circles
+                        .filter(function (d){ return d["Freedom to make life choices"] != "" })
+                        .append("ellipse")
+                            .attr("ry", function (d) {
+                                return scaleFreedom(d["Freedom to make life choices"]) /2
+                            })
+                            .attr("cy", function(d){return (side/2)- (scaleFreedom(d["Freedom to make life choices"]) /2)})
+                            .style("transform", "rotate(180deg)")
+                            .attr("fill", "#FCE0B5")
+                            .attr("id", "freedom")
+
+                        var generosity = circles
+                        .filter(function (d){ return d["Generosity"] != "" })
+                        .append("ellipse")
+                            .attr("ry", function (d) {
+                                return scaleGenerosity(d["Generosity"]) /2
+                            })
+                            .attr("cy", function(d){return (side/2)- (scaleGenerosity(d["Generosity"]) /2)})
+                            .style("transform", "rotate(240deg)")
+                            .attr("fill", "#F9F3B8")
+                            .attr("id", "generosity")
+
+                        var corruption = circles
+                            .filter(function (d){ return d["Perceptions of corruption"] != "" })
+                            .append("ellipse")
+                            .attr("ry", function (d) {                                
+                                return scaleCorruption(d["Perceptions of corruption"]) /2
+                            })
+                            .attr("cy", 
+                                function(d) {                                    
+                                    return (side/2)- (scaleCorruption(d["Perceptions of corruption"]) /2)
+                                }
+                            )
+                            .style("transform", "rotate(300deg)")
+                            .attr("fill", "#CEF7FD")
+                            .attr("id", "corruption")
+                        
+                        var textWidth = circles
+                        .filter(function(d){return Object.values(d).find(function (x) {return x === ""}) === ""})
+                        .selectAll("#countryName")
+                        .nodes().map(function(d){return d.getBoundingClientRect().width})
+                        console.log(textWidth)
+                        
+                        //alert if there is no data
+                        var nodata = circles
+                        .filter(function(d){return Object.values(d).find(function (x) {return x === ""}) === ""})
+                        .append("text")
+                        .text("Incomplete data")
+                        .attr("x", function (d, i) { return 6 + textWidth[i] })
+                        .attr("y", 10)
+                        .style("font-size","9px")
+                        .style("color","black")
+                        .style("opacity",0.4)
+                        
+                        d3.selectAll("ellipse")
+                            .classed("petals", true)
+                            .attr("cx", side / 2)
+                            .attr("rx", 16)
+
+                        //create click interaction for the filter  
+                        var clickGDP = d3.select("#checkboxGDP")
+                            .on("click", function () {
+                                // Determine if current line is visible
+                                var active = logGDPPerCapita.active ? false : true,
+                                    newOpacity = active ? 0 : 1;
+                                // Hide or show the elements
+                                d3.selectAll("#GDP").classed("hidden",active);
+                                // Update whether or not the elements are active
+                                logGDPPerCapita.active = active;
+                            })
+
+                        var clickSupport = d3.select("#checkboxSupport")
+                            .on("click", function () {
+                                var active = socialSupport.active ? false : true,
+                                    newOpacity = active ? 0 : 1;
+                                d3.selectAll("#support").classed("hidden",active);
+                                socialSupport.active = active;
+                            })
+                        
+                        var clickExpectancy = d3.select("#checkboxExpectancy")
+                            .on("click", function () {
+                                var active = healthyLifeExpectancy.active ? false : true,
+                                    newOpacity = active ? 0 : 1;
+                                d3.selectAll("#expectancy").classed("hidden",active);
+                                healthyLifeExpectancy.active = active;
+                            })
+                        
+                        var clickFreedom = d3.select("#checkboxFreedom")
+                            .on("click", function () {
+                                var active = freedomToMakeLifeChoices.active ? false : true,
+                                    newOpacity = active ? 0 : 1;
+                                d3.selectAll("#freedom").classed("hidden",active);
+                                freedomToMakeLifeChoices.active = active;
+                            })
+
+                        var clickGenerosity = d3.select("#checkboxGenerosity")
+                            .on("click", function () {
+                                var active = generosity.active ? false : true,
+                                    newOpacity = active ? 0 : 1;
+                                d3.selectAll("#generosity").classed("hidden",active);
+                                generosity.active = active;
+                            })
+
+                        var clickCorruption = d3.select("#checkboxCorruption")
+                            .on("click", function () {
+                                var active = corruption.active ? false : true,
+                                    newOpacity = active ? 0 : 1;
+                                d3.selectAll("#corruption").classed("hidden",active)
+                                corruption.active = active;
+                            })
+                       
+                        //create hover interaction for the filter
+                        var hoverGDP = d3.select("#checkboxGDPDiv")
+                            .on("mouseover", function () {
+                                    d3.selectAll("ellipse")
+                                    .style("opacity", 0.2);
+                                    d3.selectAll("#GDP")
+                                    .style("opacity", 1);
+                                 })
+                            .on("mouseout", function () {
+                                    d3.selectAll("ellipse")
+                                    .style("opacity", 1);
+                                 })
+
+                        var hoverSupport = d3.select("#checkboxSupportDiv")
+                            .on("mouseover", function () {
+                                d3.selectAll("ellipse")
+                                .style("opacity", 0.2);
+
+                                d3.selectAll("#support")
+                                .style("opacity", 1);
+                            })
+                            .on("mouseout", function () {
+                                d3.selectAll("ellipse")
+                                .style("opacity", 1);
+                            })
+                        
+                        var hoverExpectancy = d3.select("#checkboxExpectancyDiv")
+                            .on("mouseover", function () {
+                                d3.selectAll("ellipse")
+                                .style("opacity", 0.2);
+                                d3.selectAll("#expectancy")
+                                .style("opacity", 1);
+                            })
+                            .on("mouseout", function () {
+                                d3.selectAll("ellipse")
+                                .style("opacity", 1);
+                            })
+
+                        var hoverFreedom = d3.select("#checkboxFreedomDiv")
+                            .on("mouseover", function () {
+                                d3.selectAll("ellipse")
+                                .style("opacity", 0.2);
+                                d3.selectAll("#freedom")
+                                .style("opacity", 1);
+                            })
+                            .on("mouseout", function () {
+                                d3.selectAll("ellipse")
+                                .style("opacity", 1);
+                            })
+
+                        var hoverGenerosity = d3.select("#checkboxGenerosityDiv")
+                            .on("mouseover", function () {
+                                d3.selectAll("ellipse").style("opacity", 0.2);
+                                d3.selectAll("#generosity").style("opacity", 1);
+                            })
+                            .on("mouseout", function () {
+                                d3.selectAll("ellipse").style("opacity", 1);
+                            })
+
+                        var hoverCorruption = d3.select("#checkboxCorruptionDiv")
+                            .on("mouseover", function () {
+                                d3.selectAll("ellipse").style("opacity", 0.2);
+                                d3.selectAll("#corruption").style("opacity", 1);
+                            })
+                            .on("mouseout", function () {
+                                d3.selectAll("ellipse").style("opacity", 1);
+                            })
+
+                        //create hover interaction for the [i] 
+                        var hoverInfoHappiness = d3.select("#info-0")
+                            .on("mouseover", function (e) {
+                                var tooltip = d3.select(".happinessFilter")
+                                    .append("div")
+                                    .classed("tooltip", true)
+
+                                tooltip.append("text")
+                                    .text("[i] Happiness score or subjective well-being: It is the national average response to the question of life evaluations. The English wording of the question is 'Please imagine a ladder, with steps numbered from 0 at the bottom to 10 at the top. The top of the ladder represents the best possible life for you and the bottom of the ladder represents the worst possible life for you. On which step of the ladder would you say you personally feel you stand at this time?'")
+                            })
+                            .on("mouseout", function () {
+                                d3.select(".tooltip").remove()
+                            })
+
+                        var hoverInfoGDP = d3.select("#info-1")
+                            .on("mouseover", function (e) {
+                                var tooltip = d3.select(".happinessFilter")
+                                    .append("div")
+                                    .classed("tooltip", true)
+                                    
+                                tooltip.append("text")
+                                    .text("[i] The statistics of GDP per capita (variable name gdp) in purchasing power parity (PPP) at constant 2017 international dollar prices are from the October 14,2020 update of the World Development Indicators (WDI).")
+                            })
+                            .on("mouseout", function () {
+                                d3.select(".tooltip").remove()
+                            })
+
+                        var hoverInfoSupport = d3.select("#info-2")
+                            .on("mouseover", function (e) {
+                                var tooltip = d3.select(".happinessFilter")
+                                    .append("div")
+                                    .classed("tooltip", true)
+                                 
+                                tooltip.append("text")
+                                    .text("[i] Social support (or having someone to count on in times of trouble) is the national average of the binary  responses (either 0 or 1) to the GWP question 'If you were in trouble, do you have relatives or friends you can count on to help you whenever you need them, or not?'")
+                                    .style("color", "black")
+                                    .style("font-size", "12px")
+                            })
+                            .on("mouseout", function () {
+                                d3.select(".tooltip").remove()
+                            })
+
+                        var hoverInfoExpectancy = d3.select("#info-3")
+                            .on("mouseover", function (e) {
+                                var tooltip = d3.select(".happinessFilter")
+                                    .append("div")
+                                    .classed("tooltip", true)
+                                  
+                                tooltip.append("text")
+                                    .text("[i] Healthy Life Expectancy (HLE). Healthy life expectancies at birth are based on the data extracted from the World Health Organization’s (WHO) Global Health Observatory data repository (Last updated: 2020-09-28).")
+                            })
+                            .on("mouseout", function () {
+                                d3.select(".tooltip").remove()
+                            })   
+
+                        var hoverInfoFreedom = d3.select("#info-4")
+                            .on("mouseover", function (e) {
+                                var tooltip = d3.select(".happinessFilter")
+                                    .append("div")
+                                    .classed("tooltip", true)
+
+                                tooltip.append("text")
+                                    .text("[i] Freedom to make life choices is the national average of responses to the GWP question “Are you satisfied or dissatisfied with your freedom to choose what you do with your life?")
+                            })
+                            .on("mouseout", function () {
+                                d3.select(".tooltip").remove()
+                            })   
+
+                        var hoverInfoGenerosity = d3.select("#info-5")
+                            .on("mouseover", function (e) {
+                                var tooltip = d3.select(".happinessFilter")
+                                    .append("div")
+                                    .classed("tooltip", true)
+
+                                tooltip.append("text")
+                                    .text("[i] Generosity is the residual of regressing national average of response to the GWP question 'Have you donated money to a charity in the past month?' on GDP per capita.")
+                            })
+                            .on("mouseout", function () {
+                                d3.select(".tooltip").remove()
+                            })
+
+                        var hoverInfoCorruption = d3.select("#info-6")
+                            .on("mouseover", function (e) {
+                                var tooltip = d3.select(".happinessFilter")
+                                    .append("div")
+                                    .classed("tooltip", true)
+
+                                tooltip.append("text")
+                                    .text("[i] Corruption Perception: The measure is the national average of the survey responses to two questions in the GWP: “Is corruption widespread throughout the government or not” and “Is corruption widespread within businesses or not?” The overall perception is just the average of the two 0-or-1 responses.")
+                            })
+                            .on("mouseout", function () {
+                                d3.select(".tooltip").remove()
+                            })
+                    })
+            }
+            draw(filtered);
+
+            //create countries filter
+            var filterCountry = d3.select("#selectButton")
+                .on("change", function (e) {
+                    var country = e.target.value
+                    if (e.target.value === "all countries") {
+                        draw(filtered)
+                    } else {
+                        var singleCountry = filtered.filter(function (d) {
+                            return d["Country name"] === country
+                        })
+                        draw(singleCountry);
+                    }
+                })
+            filterCountry
+                .append("option")
+                .text("all countries")
+
+            filterCountry
+                .selectAll('myOptions')
+                .data(filtered)
+                .enter()
+                .append('option')
+                .text(function (d) {
+                    return d["Country name"];
+                })
+        })
+    </script>
+</body>
+</html>
